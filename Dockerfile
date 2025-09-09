@@ -2,9 +2,10 @@
 FROM node:14.17.0 as frontend
 COPY . /aoi
 WORKDIR /aoi/Frontend
-RUN npm config set registry https://registry.npm.taobao.org &&\
-    npm install && \
-    npm run build
+
+RUN npm config set registry https://registry.npmmirror.com/ && \
+    npm install 
+RUN npm run build
 
 # 后端
 FROM php:7.2-cli
@@ -19,8 +20,10 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
 RUN cd .. && cd TapeWorm && php compile.php &&\
     cd .. && cd Guardian && php compile.php &&\
     cd .. && cd RoundWorm &&\
-    sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list && \
-    sed -i 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list && \
+    # sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list  && \
+    # sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-archive/debian buster main" > /etc/apt/sources.list && \
+    echo "deb http://mirrors.aliyun.com/debian-archive/debian-security buster/updates main" >> /etc/apt/sources.list &&\
     apt update && apt install -y wget &&\
     wget https://gitee.com/slug01sh/inotify-tools/attach_files/764348/download/inotify-tools-3.14.tar.gz && \
     tar zxf inotify-tools-3.14.tar.gz && cd inotify-tools-3.14/ && \
@@ -28,7 +31,7 @@ RUN cd .. && cd TapeWorm && php compile.php &&\
     cd .. && make
 
 WORKDIR /aoi/AoiAWD
-RUN pecl install mongodb && \ 
+RUN pecl channel-update pecl.php.net && pecl install mongodb-1.9.2 && \ 
     docker-php-ext-enable mongodb && \
     php ./compile.php
 
